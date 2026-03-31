@@ -1,0 +1,68 @@
+---
+title: "groupproj"
+author: "Kylie H"
+date: "2026-03-08"
+output: html_document
+---
+
+```{r}
+data <- read.csv("C:\\Users\\kylie\\Desktop\\512 group proj\\crime_data_with_poverty_tiers.csv")
+police <-data$LemasPctPolicOnPatr
+crime <- data$totalCrimesPerPop
+unemployment <- data$PctUnemployed
+poverty <- data$PctPopUnderPov
+longpoverty <- data$LongRunPovertyRate
+
+full_model <- lm(crime ~ police + unemployment + longpoverty + poverty, data = data)
+reduced_model <- lm(crime ~ unemployment + longpoverty + poverty, data = data)
+
+#cor(data[sapply(data, is.numeric)])
+
+#checkpt 3 work
+model <- lm(crime ~ poverty + unemployment + police + longpoverty, data = data)
+
+#check outliers
+rstandard_vals <- rstandard(model)
+rstudent_vals  <- rstudent(model)
+which(abs(rstudent_vals) > 2)
+which(abs(rstudent_vals) > 3) 
+
+plot(model, which = 2)  # Q-Q
+plot(model, which = 1)  # Resid v fitted
+
+#leverage 
+lev <- hatvalues(model)
+n <- nrow(data)
+p <- length(coef(model))
+lev_cutoff <- 2 * p / n 
+which(lev > lev_cutoff)
+
+#cooks
+cooks <- cooks.distance(model)
+which(cooks > (4 / n))
+plot(cooks, type = "h")
+abline(h = 4/n, col = "red")
+
+rstudent_vals <- rstudent(model)
+lev <- hatvalues(model)
+cooks <- cooks.distance(model)
+
+diagnostics <- data.frame(
+  residual = rstudent_vals,
+  leverage = lev,
+  cooks = cooks
+)
+
+data2 = data[-c(6,61),]
+model2 <- lm(crime ~ poverty + unemployment + police + longpoverty, data = data2)
+
+model_data <- model$model
+
+bad_rows <- c(6, 61)
+
+model_data2 <- model_data[-bad_rows, ]
+model_new <- lm(crime ~ poverty + unemployment + police + longpoverty,
+                data = model_data2)
+
+```
+
